@@ -1,0 +1,77 @@
+{% extends "base.html" %}
+
+{% block title %}Главная{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-md-10">
+        <div class="jumbotron text-center mt-4 mb-5">
+            <h1 class="display-4">Добро пожаловать в ТурбоПарсер!</h1>
+            <p class="lead">Мощный инструмент для парсинга новостей, создания QR-кодов и работы с нейросетями</p>
+            <hr class="my-4">
+            <p>Выберите раздел, с которым хотите работать:</p>
+        </div>
+    </div>
+</div>
+
+<div class="row justify-content-center">
+    <div class="col-md-4 mb-4">
+        <div class="card h-100 feature-card">
+            <div class="icon-container text-center mt-4">
+                <i class="fas fa-newspaper fa-4x text-primary"></i>
+            </div>
+            <div class="card-body text-center">
+                <h5 class="card-title">Парсер новостей</h5>
+                <p class="card-text">Получайте актуальные новости с различных сайтов за указанный период времени.</p>
+                <a href="/parser" class="btn btn-primary">Перейти</a>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-4 mb-4">
+        <div class="card h-100 feature-card">
+            <div class="icon-container text-center mt-4">
+                <i class="fas fa-qrcode fa-4x text-primary"></i>
+            </div>
+            <div class="card-body text-center">
+                <h5 class="card-title">Генератор QR-кодов</h5>
+                <p class="card-text">Создавайте уникальные QR-коды для ваших ссылок и контактной информации.</p>
+                <a href="/qr" class="btn btn-primary">Перейти</a>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-4 mb-4">
+        <div class="card h-100 feature-card">
+            <div class="icon-container text-center mt-4">
+                <i class="fas fa-robot fa-4x text-primary"></i>
+            </div>
+            <div class="card-body text-center">
+                <h5 class="card-title">Работа с нейросетями</h5>
+                <p class="card-text">Используйте возможности различных моделей ИИ для решения ваших задач.</p>
+                <a href="/ai" class="btn btn-primary">Перейти</a>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row mt-5">
+    <div class="col-12">
+        <div class="card bg-light">
+            <div class="card-body">
+                <h4>Полезная информация</h4>
+                <p>ТурбоПарсер - это мощный инструмент для обработки данных, который поможет вам решить различные задачи:</p>
+                <ul>
+                    <li>Автоматический сбор новостей с профессиональных сайтов</li>
+                    <li>Создание и сохранение QR-кодов для быстрого доступа к информации</li>
+                    <li>Использование возможностей искусственного интеллекта</li>
+                </ul>
+                <p class="mt-3">Узнайте больше о метрологическом оборудовании и технологиях измерения расхода на сайте <a href="https://www.turbo-don.ru/" target="_blank" class="text-primary">ООО НПО «Турбулентность-ДОН»</a> - ведущего российского разработчика средств измерений.</p>
+                <div class="alert alert-info mt-3">
+                    <i class="fas fa-info-circle me-2"></i>Все инструменты ТурбоПарсера работают локально на вашем компьютере, что обеспечивает конфиденциальность и быстродействие.
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %} 

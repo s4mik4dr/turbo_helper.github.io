@@ -1,0 +1,179 @@
+{% extends "base.html" %}
+
+{% block title %}Парсер новостей{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-12 mb-4">
+        <div class="card">
+            <div class="card-header bg-primary text-white">
+                <h5 class="mb-0"><i class="fas fa-newspaper me-2"></i>Парсер новостей</h5>
+            </div>
+            <div class="card-body">
+                <form id="news-parser-form">
+                    <div class="row">
+                        <div class="col-md-5">
+                            <div class="form-group mb-3">
+                                <label for="start-date">Дата начала:</label>
+                                <input type="date" class="form-control" id="start-date" name="start-date" required>
+                            </div>
+                        </div>
+                        <div class="col-md-5">
+                            <div class="form-group mb-3">
+                                <label for="end-date">Дата окончания:</label>
+                                <input type="date" class="form-control" id="end-date" name="end-date" required>
+                            </div>
+                        </div>
+                        <div class="col-md-2 d-flex align-items-end">
+                            <button type="submit" class="btn btn-primary w-100" id="parse-btn">
+                                <i class="fas fa-search me-2"></i>Загрузить
+                            </button>
+                        </div>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-header bg-light">
+                <h5 class="mb-0">Результаты</h5>
+            </div>
+            <div class="card-body">
+                <div id="loading-spinner" class="text-center d-none">
+                    <div class="spinner-border text-primary" role="status">
+                        <span class="visually-hidden">Загрузка...</span>
+                    </div>
+                    <p class="mt-2">Загрузка данных...</p>
+                </div>
+                <div id="results-container">
+                    <div class="alert alert-info">
+                        <i class="fas fa-info-circle me-2"></i>Выберите даты и нажмите "Загрузить" для получения новостей.
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Устанавливаем дату по умолчанию
+    const today = new Date();
+    const lastMonth = new Date();
+    lastMonth.setMonth(today.getMonth() - 1);
+    
+    document.getElementById('start-date').valueAsDate = lastMonth;
+    document.getElementById('end-date').valueAsDate = today;
+    
+    // Обработка отправки формы
+    document.getElementById('news-parser-form').addEventListener('submit', function(e) {
+        e.preventDefault();
+        
+        const startDate = document.getElementById('start-date').value;
+        const endDate = document.getElementById('end-date').value;
+        
+        if (!startDate || !endDate) {
+            alert('Пожалуйста, выберите дату начала и окончания.');
+            return;
+        }
+        
+        if (new Date(startDate) > new Date(endDate)) {
+            alert('Дата начала не может быть позже даты окончания.');
+            return;
+        }
+        
+        // Показываем спиннер загрузки
+        document.getElementById('loading-spinner').classList.remove('d-none');
+        document.getElementById('results-container').innerHTML = '';
+        
+        // Отправляем запрос на сервер
+        fetch('/api/load_news', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+                start_date: startDate,
+                end_date: endDate
+            }),
+        })
+        .then(response => response.json())
+        .then(data => {
+            // Скрываем спиннер
+            document.getElementById('loading-spinner').classList.add('d-none');
+            
+            // Отображаем результаты
+            const resultsContainer = document.getElementById('results-container');
+            
+            if (data.length === 0) {
+                resultsContainer.innerHTML = `
+                    <div class="alert alert-warning">
+                        <i class="fas fa-exclamation-triangle me-2"></i>Новости не найдены.
+                    </div>
+                `;
+                return;
+            }
+            
+            let html = '';
+            
+            data.forEach(site => {
+                html += `<div class="site-results mb-4">`;
+                html += `<h4 class="site-name text-primary"><i class="fas fa-globe me-2"></i>${site.site}</h4>`;
+                
+                if (site.error) {
+                    html += `
+                        <div class="alert alert-danger">
+                            <i class="fas fa-exclamation-circle me-2"></i>Ошибка: ${site.error}
+                        </div>
+                    `;
+                } else if (site.news && site.news.length > 0) {
+                    html += `<div class="list-group">`;
+                    
+                    site.news.forEach(item => {
+                        html += `
+                            <div class="list-group-item">
+                                <div class="d-flex w-100 justify-content-between">
+                                    <h5 class="mb-1">${item.title}</h5>
+                                    <small class="text-muted">${item.date}</small>
+                                </div>
+                                <p class="mb-1">
+                                    <a href="${item.link}" target="_blank" class="text-decoration-none">
+                                        <i class="fas fa-external-link-alt me-1"></i>Перейти к новости
+                                    </a>
+                                </p>
+                            </div>
+                        `;
+                    });
+                    
+                    html += `</div>`;
+                } else {
+                    html += `
+                        <div class="alert alert-warning">
+                            <i class="fas fa-info-circle me-2"></i>Нет новостей за выбранный период.
+                        </div>
+                    `;
+                }
+                
+                html += `</div>`;
+            });
+            
+            resultsContainer.innerHTML = html;
+        })
+        .catch(error => {
+            document.getElementById('loading-spinner').classList.add('d-none');
+            document.getElementById('results-container').innerHTML = `
+                <div class="alert alert-danger">
+                    <i class="fas fa-exclamation-circle me-2"></i>Произошла ошибка при загрузке данных: ${error.message}
+                </div>
+            `;
+        });
+    });
+});
+</script>
+{% endblock %} 

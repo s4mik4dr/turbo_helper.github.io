@@ -1,0 +1,466 @@
+{% extends "base.html" %}
+
+{% block title %}Нейросети{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-lg-3 mb-4">
+        <div class="card h-100">
+            <div class="card-header bg-primary text-white">
+                <h5 class="mb-0"><i class="fas fa-robot me-2"></i>Настройки</h5>
+            </div>
+            <div class="card-body">
+                <form id="ai-settings-form">
+                    <div class="form-group mb-3">
+                        <label for="model-select" class="form-label">Выберите модель:</label>
+                        <select class="form-select" id="model-select" name="model" required>
+                            <option value="" selected disabled>Выберите модель...</option>
+                            <option value="deepseek">DeepSeek</option>
+                            <option value="chatgpt">ChatGPT</option>
+                            <option value="qwen">Qwen</option>
+                            <option value="gemini">Gemini 2.5</option>
+                        </select>
+                    </div>
+                    
+                    <div class="form-group mb-3">
+                        <label for="api-key" class="form-label">API ключ:</label>
+                        <div class="input-group">
+                            <span class="input-group-text"><i class="fas fa-key"></i></span>
+                            <input type="password" class="form-control" id="api-key" name="api-key" 
+                                placeholder="Введите API ключ" required>
+                            <button class="btn btn-outline-secondary" type="button" id="toggle-api-key">
+                                <i class="fas fa-eye"></i>
+                            </button>
+                        </div>
+                        <div class="form-text" id="model-api-info">
+                            Выберите модель выше, чтобы увидеть информацию о получении API ключа.
+                        </div>
+                    </div>
+                    
+                    <div class="d-grid">
+                        <button type="submit" class="btn btn-primary" id="connect-btn">
+                            <i class="fas fa-plug me-2"></i>Подключиться
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-lg-9">
+        <div class="card mb-4">
+            <div class="card-header bg-light d-flex justify-content-between align-items-center">
+                <h5 class="mb-0" id="chat-header">Диалог с ИИ</h5>
+                <span class="badge bg-secondary" id="model-badge">Не подключено</span>
+            </div>
+            <div class="card-body" id="chat-container">
+                <div class="chat-messages" id="chat-messages">
+                    <div class="alert alert-info">
+                        <i class="fas fa-info-circle me-2"></i>
+                        Выберите модель и введите API ключ для начала диалога.
+                    </div>
+                </div>
+            </div>
+            <div class="card-footer">
+                <form id="message-form" class="d-none">
+                    <div class="input-group mb-2">
+                        <input type="file" class="form-control" id="file-input" accept=".txt,.pdf,.jpg,.jpeg,.png">
+                        <button class="btn btn-outline-secondary" type="button" id="clear-file-btn">
+                            <i class="fas fa-times"></i>
+                        </button>
+                    </div>
+                    <div id="file-preview" class="mb-2 d-none">
+                        <div class="alert alert-secondary d-flex align-items-center justify-content-between">
+                            <div><i class="fas fa-file me-2"></i><span id="file-name"></span></div>
+                            <button type="button" class="btn-close" id="remove-file-btn"></button>
+                        </div>
+                    </div>
+                    <div class="input-group">
+                        <textarea class="form-control" id="message-input" placeholder="Введите сообщение..." rows="2" required></textarea>
+                        <button class="btn btn-primary" type="submit" id="send-btn">
+                            <i class="fas fa-paper-plane"></i>
+                        </button>
+                    </div>
+                </form>
+                <div id="connect-message">
+                    <div class="alert alert-primary text-center">
+                        <i class="fas fa-plug me-2"></i>
+                        Подключитесь к модели ИИ, чтобы начать общение
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const aiSettingsForm = document.getElementById('ai-settings-form');
+    const messageForm = document.getElementById('message-form');
+    const connectMessage = document.getElementById('connect-message');
+    const modelSelect = document.getElementById('model-select');
+    const apiKeyInput = document.getElementById('api-key');
+    const toggleApiKeyBtn = document.getElementById('toggle-api-key');
+    const modelApiInfo = document.getElementById('model-api-info');
+    const modelBadge = document.getElementById('model-badge');
+    const chatMessages = document.getElementById('chat-messages');
+    const messageInput = document.getElementById('message-input');
+    const fileInput = document.getElementById('file-input');
+    const filePreview = document.getElementById('file-preview');
+    const fileName = document.getElementById('file-name');
+    const clearFileBtn = document.getElementById('clear-file-btn');
+    const removeFileBtn = document.getElementById('remove-file-btn');
+    
+    let selectedFile = null;
+    let selectedModel = null;
+    let apiKey = null;
+    
+    // Обработчик формы настроек ИИ
+    aiSettingsForm.addEventListener('submit', function(e) {
+        e.preventDefault();
+        
+        const model = modelSelect.value;
+        const key = apiKeyInput.value.trim();
+        
+        if (!model) {
+            alert('Пожалуйста, выберите модель.');
+            return;
+        }
+        
+        if (!key) {
+            alert('Пожалуйста, введите API ключ.');
+            return;
+        }
+        
+        // Сохраняем выбранную модель и API ключ
+        selectedModel = model;
+        apiKey = key;
+        
+        // Обновляем интерфейс
+        modelBadge.textContent = getModelDisplayName(model);
+        modelBadge.classList.remove('bg-secondary');
+        modelBadge.classList.add('bg-success');
+        
+        // Показываем форму для отправки сообщений
+        messageForm.classList.remove('d-none');
+        connectMessage.classList.add('d-none');
+        
+        // Очищаем чат и добавляем приветственное сообщение
+        chatMessages.innerHTML = '';
+        addSystemMessage(`Подключено к модели ${getModelDisplayName(model)}. Чем я могу вам помочь?`);
+    });
+    
+    // Обработчик изменения модели
+    modelSelect.addEventListener('change', function() {
+        const model = modelSelect.value;
+        updateApiKeyInfo(model);
+    });
+    
+    // Обработчик нажатия на кнопку отображения/скрытия API ключа
+    toggleApiKeyBtn.addEventListener('click', function() {
+        if (apiKeyInput.type === 'password') {
+            apiKeyInput.type = 'text';
+            toggleApiKeyBtn.innerHTML = '<i class="fas fa-eye-slash"></i>';
+        } else {
+            apiKeyInput.type = 'password';
+            toggleApiKeyBtn.innerHTML = '<i class="fas fa-eye"></i>';
+        }
+    });
+    
+    // Обработчик отправки сообщения
+    messageForm.addEventListener('submit', function(e) {
+        e.preventDefault();
+        
+        const message = messageInput.value.trim();
+        
+        if (!message) {
+            return;
+        }
+        
+        // Добавляем сообщение пользователя в чат
+        addUserMessage(message);
+        
+        // Очищаем поле ввода
+        messageInput.value = '';
+        
+        // Если есть файл, отправляем его
+        if (selectedFile) {
+            uploadFile(selectedFile, message);
+        } else {
+            // Отправляем запрос на сервер
+            sendMessage(message);
+        }
+    });
+    
+    // Обработчик выбора файла
+    fileInput.addEventListener('change', function(e) {
+        const file = e.target.files[0];
+        if (file) {
+            selectedFile = file;
+            fileName.textContent = file.name;
+            filePreview.classList.remove('d-none');
+        }
+    });
+    
+    // Обработчики очистки файла
+    clearFileBtn.addEventListener('click', function() {
+        fileInput.value = '';
+        selectedFile = null;
+        filePreview.classList.add('d-none');
+    });
+    
+    removeFileBtn.addEventListener('click', function() {
+        fileInput.value = '';
+        selectedFile = null;
+        filePreview.classList.add('d-none');
+    });
+    
+    // Функция обновления информации об API ключе
+    function updateApiKeyInfo(model) {
+        switch (model) {
+            case 'deepseek':
+                modelApiInfo.innerHTML = 'Получите API ключ на <a href="https://platform.deepseek.com/" target="_blank">platform.deepseek.com</a>';
+                break;
+            case 'chatgpt':
+                modelApiInfo.innerHTML = 'Получите API ключ на <a href="https://platform.openai.com/" target="_blank">platform.openai.com</a>';
+                break;
+            case 'qwen':
+                modelApiInfo.innerHTML = 'Получите API ключ на <a href="https://dashscope.aliyun.com/" target="_blank">dashscope.aliyun.com</a>';
+                break;
+            case 'gemini':
+                modelApiInfo.innerHTML = 'Получите API ключ на <a href="https://ai.google.dev/" target="_blank">ai.google.dev</a>';
+                break;
+            default:
+                modelApiInfo.textContent = 'Выберите модель выше, чтобы увидеть информацию о получении API ключа.';
+        }
+    }
+    
+    // Функция для получения отображаемого имени модели
+    function getModelDisplayName(model) {
+        switch (model) {
+            case 'deepseek': return 'DeepSeek';
+            case 'chatgpt': return 'ChatGPT';
+            case 'qwen': return 'Qwen';
+            case 'gemini': return 'Gemini 2.5';
+            default: return 'Неизвестная модель';
+        }
+    }
+    
+    // Функция добавления сообщения пользователя в чат
+    function addUserMessage(message) {
+        const messageElement = document.createElement('div');
+        messageElement.className = 'message user-message mb-3';
+        messageElement.innerHTML = `
+            <div class="message-content user-content">
+                <div class="message-text">${escapeHTML(message)}</div>
+                <div class="message-time">${getCurrentTime()}</div>
+            </div>
+        `;
+        chatMessages.appendChild(messageElement);
+        chatMessages.scrollTop = chatMessages.scrollHeight;
+    }
+    
+    // Функция добавления системного сообщения в чат
+    function addSystemMessage(message) {
+        const messageElement = document.createElement('div');
+        messageElement.className = 'alert alert-info';
+        messageElement.innerHTML = `<i class="fas fa-info-circle me-2"></i>${message}`;
+        chatMessages.appendChild(messageElement);
+        chatMessages.scrollTop = chatMessages.scrollHeight;
+    }
+    
+    // Функция добавления сообщения ИИ в чат
+    function addAIMessage(message) {
+        const messageElement = document.createElement('div');
+        messageElement.className = 'message ai-message mb-3';
+        messageElement.innerHTML = `
+            <div class="message-content ai-content">
+                <div class="message-text">${message}</div>
+                <div class="message-time">${getCurrentTime()}</div>
+            </div>
+        `;
+        chatMessages.appendChild(messageElement);
+        chatMessages.scrollTop = chatMessages.scrollHeight;
+    }
+    
+    // Функция для отправки сообщения на сервер
+    function sendMessage(message) {
+        // Добавляем индикатор загрузки
+        const loadingElement = document.createElement('div');
+        loadingElement.className = 'message ai-message mb-3 ai-loading';
+        loadingElement.innerHTML = `
+            <div class="message-content ai-content">
+                <div class="d-flex align-items-center">
+                    <div class="spinner-grow spinner-grow-sm me-2" role="status">
+                        <span class="visually-hidden">Загрузка...</span>
+                    </div>
+                    <span>Модель думает...</span>
+                </div>
+            </div>
+        `;
+        chatMessages.appendChild(loadingElement);
+        chatMessages.scrollTop = chatMessages.scrollHeight;
+        
+        // Отправляем запрос на сервер
+        fetch('/api/ai_chat', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+                model: selectedModel,
+                message: message,
+                api_key: apiKey
+            }),
+        })
+        .then(response => {
+            if (!response.ok) {
+                throw new Error('Ошибка сервера при обработке запроса.');
+            }
+            return response.json();
+        })
+        .then(data => {
+            // Удаляем индикатор загрузки
+            chatMessages.removeChild(loadingElement);
+            
+            // Добавляем ответ ИИ
+            addAIMessage(data.response);
+        })
+        .catch(error => {
+            // Удаляем индикатор загрузки
+            chatMessages.removeChild(loadingElement);
+            
+            // Добавляем сообщение об ошибке
+            addSystemMessage(`Ошибка: ${error.message}`);
+        });
+    }
+    
+    // Функция для загрузки файла
+    function uploadFile(file, message) {
+        // Создаем FormData для отправки файла
+        const formData = new FormData();
+        formData.append('file', file);
+        
+        // Добавляем индикатор загрузки
+        const loadingElement = document.createElement('div');
+        loadingElement.className = 'message ai-message mb-3 ai-loading';
+        loadingElement.innerHTML = `
+            <div class="message-content ai-content">
+                <div class="d-flex align-items-center">
+                    <div class="spinner-grow spinner-grow-sm me-2" role="status">
+                        <span class="visually-hidden">Загрузка...</span>
+                    </div>
+                    <span>Загрузка файла...</span>
+                </div>
+            </div>
+        `;
+        chatMessages.appendChild(loadingElement);
+        chatMessages.scrollTop = chatMessages.scrollHeight;
+        
+        // Отправляем файл на сервер
+        fetch('/api/upload', {
+            method: 'POST',
+            body: formData,
+        })
+        .then(response => {
+            if (!response.ok) {
+                throw new Error('Ошибка загрузки файла.');
+            }
+            return response.json();
+        })
+        .then(fileData => {
+            // Удаляем индикатор загрузки
+            chatMessages.removeChild(loadingElement);
+            
+            // Очищаем выбранный файл
+            selectedFile = null;
+            fileInput.value = '';
+            filePreview.classList.add('d-none');
+            
+            // Отправляем сообщение с упоминанием файла
+            const fileMessage = `${message} [Файл: ${fileData.filename}]`;
+            sendMessage(fileMessage);
+        })
+        .catch(error => {
+            // Удаляем индикатор загрузки
+            chatMessages.removeChild(loadingElement);
+            
+            // Добавляем сообщение об ошибке
+            addSystemMessage(`Ошибка загрузки файла: ${error.message}`);
+        });
+    }
+    
+    // Получение текущего времени в формате ЧЧ:ММ
+    function getCurrentTime() {
+        const now = new Date();
+        const hours = now.getHours().toString().padStart(2, '0');
+        const minutes = now.getMinutes().toString().padStart(2, '0');
+        return `${hours}:${minutes}`;
+    }
+    
+    // Экранирование HTML
+    function escapeHTML(text) {
+        const div = document.createElement('div');
+        div.textContent = text;
+        return div.innerHTML;
+    }
+});
+</script>
+
+<style>
+/* Стили для чата */
+.chat-messages {
+    height: 500px;
+    overflow-y: auto;
+    padding: 15px;
+    background-color: #f8f9fa;
+    border-radius: 5px;
+}
+
+.message {
+    display: flex;
+    margin-bottom: 15px;
+}
+
+.user-message {
+    justify-content: flex-end;
+}
+
+.ai-message {
+    justify-content: flex-start;
+}
+
+.message-content {
+    max-width: 70%;
+    padding: 10px 15px;
+    border-radius: 10px;
+    position: relative;
+}
+
+.user-content {
+    background-color: #007bff;
+    color: white;
+    border-top-right-radius: 0;
+}
+
+.ai-content {
+    background-color: #e9ecef;
+    color: #212529;
+    border-top-left-radius: 0;
+}
+
+.message-time {
+    font-size: 0.75rem;
+    text-align: right;
+    margin-top: 5px;
+    opacity: 0.8;
+}
+
+.ai-loading .message-content {
+    background-color: #f8f9fa;
+    border: 1px solid #dee2e6;
+}
+</style>
+{% endblock %} 
