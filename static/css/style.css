@@ -1,0 +1,206 @@
+/* Основные стили для всего приложения */
+:root {
+    --primary-color: #0d6efd;
+    --primary-hover: #0b5ed7;
+    --light-bg: #ffffff;
+    --light-text: #212529;
+    --light-border: #dee2e6;
+    --light-hover: #f8f9fa;
+    --dark-bg: #212529;
+    --dark-secondary-bg: #343a40;
+    --dark-text: #f8f9fa;
+    --dark-border: #495057;
+    --dark-hover: #343a40;
+    --transition-speed: 0.3s;
+}
+
+body {
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    transition: background-color var(--transition-speed), color var(--transition-speed);
+}
+
+/* Стили для светлой темы (по умолчанию) */
+body[data-bs-theme="light"] {
+    background-color: #f8f9fa;
+    color: var(--light-text);
+}
+
+/* Стили для тёмной темы */
+body[data-bs-theme="dark"] {
+    background-color: var(--dark-bg);
+    color: var(--dark-text);
+}
+
+body[data-bs-theme="dark"] .card {
+    background-color: var(--dark-secondary-bg);
+    border-color: var(--dark-border);
+}
+
+body[data-bs-theme="dark"] .navbar {
+    background-color: var(--dark-secondary-bg) !important;
+}
+
+body[data-bs-theme="dark"] .navbar-light .navbar-brand,
+body[data-bs-theme="dark"] .navbar-light .navbar-nav .nav-link {
+    color: var(--dark-text);
+}
+
+body[data-bs-theme="dark"] .navbar-light .navbar-nav .nav-link.active {
+    color: var(--primary-color);
+}
+
+body[data-bs-theme="dark"] .footer {
+    background-color: var(--dark-secondary-bg);
+    color: var(--dark-text);
+}
+
+/* Основные элементы интерфейса */
+.navbar {
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    transition: background-color var(--transition-speed);
+}
+
+.footer {
+    margin-top: auto;
+    background-color: #f8f9fa;
+    border-top: 1px solid var(--light-border);
+    transition: background-color var(--transition-speed), color var(--transition-speed);
+}
+
+.card {
+    border-radius: 10px;
+    overflow: hidden;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    transition: transform 0.2s, box-shadow 0.2s, background-color var(--transition-speed);
+}
+
+.card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 8px 15px rgba(0, 0, 0, 0.1);
+}
+
+.card-header {
+    font-weight: 600;
+}
+
+/* Анимации и эффекты */
+.feature-card {
+    transition: transform 0.3s, box-shadow 0.3s;
+}
+
+.feature-card:hover {
+    transform: translateY(-10px);
+    box-shadow: 0 10px 20px rgba(0, 0, 0, 0.15);
+}
+
+.icon-container {
+    height: 80px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+.btn {
+    transition: all 0.2s;
+}
+
+.btn-primary {
+    background-color: var(--primary-color);
+    border-color: var(--primary-color);
+}
+
+.btn-primary:hover {
+    background-color: var(--primary-hover);
+    border-color: var(--primary-hover);
+    transform: translateY(-2px);
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+}
+
+/* Стили для парсера новостей */
+.site-name {
+    border-bottom: 2px solid var(--primary-color);
+    padding-bottom: 8px;
+    margin-bottom: 15px;
+}
+
+.list-group-item {
+    transition: background-color 0.2s;
+}
+
+.list-group-item:hover {
+    background-color: var(--light-hover);
+}
+
+body[data-bs-theme="dark"] .list-group-item {
+    background-color: var(--dark-secondary-bg);
+    color: var(--dark-text);
+    border-color: var(--dark-border);
+}
+
+body[data-bs-theme="dark"] .list-group-item:hover {
+    background-color: var(--dark-hover);
+}
+
+/* Стили для QR генератора */
+.qr-container {
+    padding: 20px;
+    background-color: white;
+    display: inline-block;
+    border-radius: 8px;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+}
+
+/* Стили для чата с ИИ */
+body[data-bs-theme="dark"] .chat-messages {
+    background-color: var(--dark-secondary-bg);
+}
+
+body[data-bs-theme="dark"] .ai-content {
+    background-color: #495057;
+    color: var(--dark-text);
+}
+
+body[data-bs-theme="dark"] .ai-loading .message-content {
+    background-color: var(--dark-secondary-bg);
+    border-color: var(--dark-border);
+}
+
+/* Медиа запросы для адаптивности */
+@media (max-width: 768px) {
+    .chat-messages {
+        height: 400px;
+    }
+    
+    .message-content {
+        max-width: 85%;
+    }
+}
+
+@media (max-width: 576px) {
+    .chat-messages {
+        height: 350px;
+    }
+    
+    .message-content {
+        max-width: 90%;
+    }
+}
+
+/* Анимации */
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+        transform: translateY(20px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.alert, .card, .jumbotron {
+    animation: fadeIn 0.5s ease-out;
+} 
